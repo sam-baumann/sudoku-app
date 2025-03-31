@@ -207,6 +207,9 @@
   .contents {
     display: contents;
   }
+  .grid {
+    display: grid;
+  }
   .hidden {
     display: none;
   }
