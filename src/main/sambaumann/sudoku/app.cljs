@@ -3,8 +3,13 @@
 
 (defonce root (rdom/create-root (js/document.getElementById "root")))
 
-(defn app []
-  [:div "test1"])
+(defn grid
+  "creates the grid"
+  []
+  [:table (into [:tbody] (map #(vector :tr [:td %]) (range 9)))])
 
-(defn ^:export init [] 
+(defn app []
+  (grid))
+
+(defn ^:export init []
   (rdom/render root (app)))
