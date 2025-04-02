@@ -1,1 +1,10 @@
 @import "tailwindcss";
+
+td.cell {
+    border: 1px solid black;
+
+    width: 5vw;
+    height: 5vw;
+
+    text-align: center;
+}

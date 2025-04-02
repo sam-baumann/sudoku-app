@@ -6,7 +6,17 @@
 (defn grid
   "creates the grid"
   []
-  [:table (into [:tbody] (map #(vector :tr [:td %]) (range 9)))])
+  [:table
+   (into [:tbody]
+         (map (fn [i]
+                (into [:tr]
+                      (map (fn [j]
+                             [:td {:className "cell"
+                                   :onClick #(js/alert
+                                              (str "Cell " i ", " j " clicked"))}
+                              \" i j \"])
+                           (range 9))))
+              (range 9)))])
 
 (defn app []
   (grid))
