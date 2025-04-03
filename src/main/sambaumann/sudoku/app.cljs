@@ -26,4 +26,4 @@
   (grid))
 
 (defn ^:export init []
-  (rdom/render root (r/as-element [app])))
+  (rdom/render root [app]))
