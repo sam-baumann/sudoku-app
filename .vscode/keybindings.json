@@ -1,0 +1,12 @@
+[
+    {
+        "key": "ctrl+w",
+        "command": "-extension.vim_ctrl+w",
+        "when": "editorTextFocus && vim.active"
+    },
+    {
+        "key": "escape",
+        "command": "-calva.cancelEval",
+        "when": "editorTextFocus && vim.active"
+    }
+]

@@ -9,22 +9,37 @@
 
 (defonce board-state (r/atom (into [] (repeat 9 (into [] (repeat 9 0))))))
 
+(defn cell
+  "cell object"
+  [i j]
+  [:div
+   {:className (if (= [i j] @active-square) "cell bg-gray-200" "cell hover:bg-gray-200")
+    :onClick #(reset! active-square [i j])}
+   (let [square-state (get-in @board-state [i j])]
+     (when (not= square-state 0)
+       square-state)) " " i ", " j])
+
+(defn group
+  "group of 3x3 cells"
+  [starti startj]
+  (into [:div {:className "flex border-2"}]
+        (map (fn
+               [i]
+               (into [:div]
+                     (map #(cell i %)
+                          (range startj (+ startj 3)))))
+             (range starti (+ starti 3)))))
+
 (defn grid
   "creates the grid"
   []
-  [:table
-   (into [:tbody]
-         (map (fn [i]
-                (into [:tr]
-                      (map (fn [j]
-                             [:td
-                              {:className (if (= [i j] @active-square) "cell bg-gray-200" "cell hover:bg-gray-200")
-                               :onClick #(reset! active-square [i j])}
-                              (let [square-state (get-in @board-state [i j])]
-                                (when (not= square-state 0)
-                                  square-state))])
-                           (range 9))))
-              (range 9)))])
+  (into [:div {:className "flex border-2 w-min"}]
+        (map (fn [i]
+               (into [:div]
+                     (map (fn [j]
+                            (group i j))
+                          (range 0 9 3))))
+             (range 0 9 3))))
 
 
 
