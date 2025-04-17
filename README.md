@@ -14,14 +14,14 @@ Tailwind used for styling - use `pnpm run tailwind` to generate the output css. 
 
 ---
 
-## 📌 2. Core Structure & UI Layout
+## ✅ 2. Core Structure & UI Layout
 - **2.1** Set up a simple UI with a Sudoku grid (9x9).
 - **2.2** Style the grid using TailwindCSS, making sure cells are clickable.
 - **2.3** Implement basic styling for active/selected cells.
 
 ---
 
-## 📌 3. State Management & Reagent Integration
+## ✅ 3. State Management & Reagent Integration
 - **3.1** Define application state using Reagent's `atom`.
 - **3.2** Implement a mechanism to update state when a cell is clicked or a number is entered.
 - **3.3** Render updates to the grid based on state changes.

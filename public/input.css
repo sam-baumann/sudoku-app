@@ -2,8 +2,8 @@
 
 .cell {
     border: 1px solid black;
-    width: 7vw;
-    height: 7vw;
+    width: 8vw;
+    height: 8vw;
 
     display: flex;
     justify-content: center;
@@ -15,5 +15,5 @@
     padding-bottom: 4px;
     /* optional spacing from bottom */
 
-    font-size: 3vw;
+    font-size: 4vw;
 }

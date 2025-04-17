@@ -7,27 +7,35 @@
 
 (defonce active-square (r/atom [-1 -1]))
 
-;the puzzle is loaded in as this atom
-(defonce original-state (r/atom (into [] (repeat 9 (into [] (repeat 9 0))))))
-
 ;the current digits in the board - 0 if not filled
 (defonce board-state (r/atom (into [] (repeat 9 (into [] (repeat 9 0))))))
+
+;the puzzle is loaded in as this atom 
+(defonce original-state (r/atom (into [] (repeat 9 (into [] (repeat 9 0))))))
+;when the puzzle is changed, clear the board
+(add-watch original-state :board-clear
+           #(reset! board-state @original-state))
 
 (defn cell
   "cell object"
   [i j]
-  [:div
+  (let [active-square? (= [i j] @active-square)
+        in-original? (not= 0 (get-in @original-state [i j]))]
+    [:div
    ;div properties
    ;styling
-   {:className (if (= [i j] @active-square) "cell bg-gray-200" "cell hover:bg-gray-200")
+     {:className (str "cell" (cond
+                               in-original? " bg-gray-200"
+                               active-square? " bg-yellow-100"
+                               :else " hover:bg-gray-200"))
     ; sets the active square when clicked
-    :onClick #(reset! active-square [i j])}
+      :onClick #(when (not in-original?) (reset! active-square [i j]))}
    ;if the state is 0 - don't show it, otherwise do
-   (let
-    [square-state (get-in @board-state [i j])]
-     (when
-      (not= square-state 0)
-       square-state))])
+     (let
+      [square-state (get-in @board-state [i j])]
+       (when
+        (not= square-state 0)
+         square-state))]))
 
 (defn group
   "group of 3x3 cells"
@@ -51,16 +59,33 @@
                           (range 0 9 3))))
              (range 0 9 3))))
 
+(defn set-puzzle []
+  (reset! original-state [[0 0 0 2 6 0 7 0 1]
+                          [6 8 0 0 7 0 0 9 0]
+                          [1 9 0 0 0 4 5 0 0]
+                          [8 2 0 1 0 0 0 4 0]
+                          [0 0 4 6 0 2 9 0 0]
+                          [0 5 0 0 0 3 0 2 8]
+                          [0 0 9 3 0 0 0 7 4]
+                          [0 4 0 0 5 0 0 3 6]
+                          [7 0 3 0 1 8 0 0 0]]))
 
-
-(defn app [] (grid))
+(defn app []
+  [:div
+   (grid)
+   [:button {:onClick set-puzzle
+             :className "px-4 py-2 rounded-md border hover:bg-blue-100"}
+    "reset puzzle"]])
 
 (defn keypress-listener
   [event]
   (let [pressed-key event.event_.key]
-    (if (contains? (set (range 1 10)) (int pressed-key))
+    (cond
+      (contains? (set (range 1 10)) (int pressed-key))
       (swap! board-state assoc-in @active-square (int pressed-key))
-      :else)))
+      (contains? #{"Backspace" "Delete"} pressed-key)
+      (swap! board-state assoc-in @active-square 0)
+      :else (js/console.log pressed-key))))
 
 (defn ^:export init []
   (events/removeAll js/document "keyup") ; remove all listeners, as an old one may still be listening if we are hot-reloading during dev
