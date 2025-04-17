@@ -2,9 +2,18 @@
 
 .cell {
     border: 1px solid black;
-
     width: 7vw;
     height: 7vw;
 
+    display: flex;
+    justify-content: center;
+    /* horizontal center */
+    align-items: flex-end;
+    /* vertical bottom */
+
     text-align: center;
+    padding-bottom: 4px;
+    /* optional spacing from bottom */
+
+    font-size: 3vw;
 }

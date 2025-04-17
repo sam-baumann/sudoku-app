@@ -7,17 +7,27 @@
 
 (defonce active-square (r/atom [-1 -1]))
 
+;the puzzle is loaded in as this atom
+(defonce original-state (r/atom (into [] (repeat 9 (into [] (repeat 9 0))))))
+
+;the current digits in the board - 0 if not filled
 (defonce board-state (r/atom (into [] (repeat 9 (into [] (repeat 9 0))))))
 
 (defn cell
   "cell object"
   [i j]
   [:div
+   ;div properties
+   ;styling
    {:className (if (= [i j] @active-square) "cell bg-gray-200" "cell hover:bg-gray-200")
+    ; sets the active square when clicked
     :onClick #(reset! active-square [i j])}
-   (let [square-state (get-in @board-state [i j])]
-     (when (not= square-state 0)
-       square-state)) " " i ", " j])
+   ;if the state is 0 - don't show it, otherwise do
+   (let
+    [square-state (get-in @board-state [i j])]
+     (when
+      (not= square-state 0)
+       square-state))])
 
 (defn group
   "group of 3x3 cells"
@@ -33,7 +43,7 @@
 (defn grid
   "creates the grid"
   []
-  (into [:div {:className "flex border-2 w-min"}]
+  (into [:div {:className "flex border-2 w-min rounded-lg"}]
         (map (fn [i]
                (into [:div]
                      (map (fn [j]
