@@ -33,11 +33,27 @@
                          (range startj (+ 3 startj))))
             (range starti (+ 3 starti))))))
 
+(defn is-full
+  [puzzle-component]
+  ; a row is full if it has no zeroes
+  (= 0 (count (filter zero? puzzle-component))))
+
+(defn all-unique
+  [puzzle-component]
+  (let
+   [filled-entries (remove zero? puzzle-component)]
+    (= (distinct filled-entries) filled-entries)))
+
 (defn is-solved
   [puzzle]
-  (every? true? '(;first check rows
-                  (every? #(check-row puzzle %) (range 9))
-                  (every? #(check-col puzzle %) (range 9)))))
+  ;ensure all rows,cols, and groups are fully filled and unique
+  (every? true?
+          (map
+           (fn [i] (every? true?
+                           (map #(every? true?
+                                         (list (is-full %) (all-unique %)))
+                                (list (get-row puzzle i) (get-col puzzle i) (get-group puzzle i)))))
+           (range 9))))
 
 (defn solve-puzzle
   ;returns solution to the given puzzle
@@ -131,6 +147,8 @@
 
 ;the current digits in the board - 0 if not filled
 (defonce board-state (r/atom (blank-puzzle)))
+(add-watch board-state :check-solved
+           (fn [] (when (is-solved @board-state) (js/console.log "solved!"))))
 
 ;the puzzle is loaded in as this atom 
 (defonce original-state (r/atom (blank-puzzle)))
