@@ -6,7 +6,8 @@
     "shadow": "shadow-cljs",
     "watch": "shadow-cljs watch sudoku",
     "repl": "shadow-cljs cljs-repl sudoku",
-    "tailwind": "tailwindcss -i ./public/input.css -o ./public/output.css"
+    "tailwind": "tailwindcss -i ./public/input.css -o ./public/output.css",
+    "test": "shadow-cljs compile test; node test_output/test.js"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.0.17",

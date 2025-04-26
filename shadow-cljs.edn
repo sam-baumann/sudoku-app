@@ -4,7 +4,7 @@
   "src/main"
   "src/test"]
 
- :dev-http {8888 "public"} 
+ :dev-http {8888 "public"}
 
  :dependencies
  [[reagent "1.3.0"]]
@@ -14,5 +14,9 @@
   {:target :browser
    :devtools {:after-load sambaumann.sudoku.app/init}
    :modules {:main {:init-fn sambaumann.sudoku.app/init
-                    :entries [sambaumann.sudoku.app]}}
-   }}}
+                    :entries [sambaumann.sudoku.app]}}}
+
+  :test
+  {:target :node-test
+   :output-to "test_output/test.js"
+   :ns-regexp "-test$"}}}

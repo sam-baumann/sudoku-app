@@ -1,4 +1,3 @@
 {
-    "editor.formatOnSave": true,
-    "vim.disableExtension": true
+    "editor.formatOnSave": true
 }

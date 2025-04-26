@@ -24,3 +24,4 @@ pom.xml.asc
 .lsp
 
 public/output.css
+test_output/*

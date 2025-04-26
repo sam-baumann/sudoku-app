@@ -12,18 +12,38 @@
   []
   false)
 
-(defn check-row
+(defn get-row
   ;checks the individual row
   [puzzle row-index]
-  false)
+  (get-in puzzle [row-index]))
 
-(defn check-col
+(defn get-col
   ;check column for correctness
   [puzzle col-index]
-  (= (get-in puzzle col-index) (set (range 1 10))))
+  (map #(get % col-index) puzzle))
+
+(defn get-group
+  [puzzle group-index]
+  (let [starti (* 3 (quot group-index 3))
+        startj (* 3 (mod group-index 3))]
+    (apply concat
+           (map
+            (fn [i] (map (fn [j]
+                           (get-in puzzle [i j]))
+                         (range startj (+ 3 startj))))
+            (range starti (+ 3 starti))))))
+
+(defn is-solved
+  [puzzle]
+  (every? true? '(;first check rows
+                  (every? #(check-row puzzle %) (range 9))
+                  (every? #(check-col puzzle %) (range 9)))))
 
 (defn solve-puzzle
   ;returns solution to the given puzzle
+  ;recursive: base case - all rows, cols, and 3x3 groups contain 1-9
+  ;another base case: less than 17 numbers filled in - that's the minimujm
+  ;otherwise, pick a random blank and fill in a number that fits, then recur with that
   [puzzle]
   (blank-puzzle))
 
@@ -105,7 +125,7 @@
       :else (js/console.log pressed-key))))
 
 ;Atoms
-(defonce root (rdom/create-root (js/document.getElementById "root")))
+(defonce root (delay (rdom/create-root (js/document.getElementById "root"))))
 
 (defonce active-square (r/atom [-1 -1]))
 
@@ -122,5 +142,5 @@
 (defn ^:export init []
   (events/removeAll js/document "keyup") ; remove all listeners, as an old one may still be listening if we are hot-reloading during dev
   (events/listen js/document "keyup" keypress-listener) ; add input listener
-  (rdom/render root [app]) ;render UI
+  (rdom/render @root [app]) ;render UI
   )
