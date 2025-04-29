@@ -1,7 +1,8 @@
 (ns sambaumann.sudoku.app-test
   (:require
    [cljs.test :refer [deftest is testing]]
-   [sambaumann.sudoku.app :refer [blank-puzzle get-col get-group get-row solve-puzzle is-full all-unique is-solved]]))
+   [sambaumann.sudoku.app :refer
+    [blank-puzzle get-col get-group get-row solve-puzzle is-full all-unique is-solved group-from-coords valid-entry]]))
 
 
 (deftest test-blank-puzzle
@@ -52,6 +53,16 @@
   (is (= (is-solved (blank-puzzle)) false))
   (is (= (is-solved sample-puzzle) true)))
 
+(deftest test-group-from-coords
+  (is (= (group-from-coords 0 0) 0))
+  (is (= (group-from-coords 8 8) 8))
+  (is (= (group-from-coords 4 0) 3))
+  (is (= (group-from-coords 2 6) 2)))
+
+(deftest test-valid-entry
+  (is (= (valid-entry (blank-puzzle) 1 0 0) true))
+  (is (= (valid-entry (assoc-in (blank-puzzle) [0 0] 1) 1 0 1) false)))
+
 (deftest test-solve-puzzle
-  (testing "Currently just returns blank puzzle"
-    (is (= (blank-puzzle) (solve-puzzle (blank-puzzle))))))
+  (testing "Solve puzzle"
+    (is (= (first (solve-puzzle (-> sample-puzzle (assoc-in [0 0] 0) (assoc-in [5 5] 0) (assoc-in [6 6] 0) (assoc-in [6 7] 0)))) sample-puzzle))))

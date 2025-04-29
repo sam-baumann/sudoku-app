@@ -55,13 +55,57 @@
                                 (list (get-row puzzle i) (get-col puzzle i) (get-group puzzle i)))))
            (range 9))))
 
-(defn solve-puzzle
-  ;returns solution to the given puzzle
-  ;recursive: base case - all rows, cols, and 3x3 groups contain 1-9
-  ;another base case: less than 17 numbers filled in - that's the minimujm
-  ;otherwise, pick a random blank and fill in a number that fits, then recur with that
+(defn group-from-coords
+  [i j]
+  (+ (* 3 (quot i 3)) (quot j 3)))
+
+(defn valid-entry
+  ;returns wether inserting value into puzzle at [i j] is valid
+  [puzzle value i j]
+  (let
+   [new-puzzle (assoc-in puzzle [i j] value)]
+    (every? true? (map all-unique [(get-row new-puzzle i) (get-col new-puzzle j) (get-group new-puzzle (group-from-coords i j))]))))
+
+(defn all-pairs
+  []
+  (apply concat (map (fn [i] (map (fn [j] [i j]) (range 9))) (range 9))))
+
+(defn empty-cells
   [puzzle]
-  (blank-puzzle))
+  (filter #(= 0 (get-in puzzle %)) (all-pairs)))
+
+(defn valid-next-states
+  ;returns possible moves in the form [i j val]
+  [puzzle]
+  (let [puzzle-empty-cells (empty-cells puzzle)]
+    (apply concat
+           (map
+            (fn [i] (map #(conj % i)
+                         (filter (fn [empty-cell]
+                                   (valid-entry puzzle i (first empty-cell) (second empty-cell))) puzzle-empty-cells)))
+            (range 1 10)))))
+
+(defn next-puzzles
+  ;returns a lazy sequence of possible next moves
+  [puzzle]
+  (let
+   [next-states (shuffle (valid-next-states puzzle))]
+    (map (fn [next-state] (assoc-in puzzle [(first next-state) (second next-state)] (nth next-state 2))) next-states)))
+
+(defn recursive-solve-puzzle
+  ;returns solution to the given puzzle 
+  [puzzle visited]
+             ;if already visited, back out
+  (if (@visited puzzle) []
+      (do (swap! visited conj puzzle)
+    ;possible optimization: check if any cell has no possibilities, return [] if so 
+          (if
+           (is-solved puzzle) [puzzle]
+           (mapcat #(recursive-solve-puzzle % visited) (next-puzzles puzzle))))))
+
+(defn solve-puzzle
+  [puzzle]
+  (recursive-solve-puzzle puzzle (atom #{})))
 
 (defn blank-puzzle
   []
