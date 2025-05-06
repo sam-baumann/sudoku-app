@@ -74,38 +74,72 @@
   [puzzle]
   (filter #(= 0 (get-in puzzle %)) (all-pairs)))
 
-(defn valid-next-states
-  ;returns possible moves in the form [i j val]
+(defn constraints
   [puzzle]
-  (let [puzzle-empty-cells (empty-cells puzzle)]
-    (apply concat
-           (map
-            (fn [i] (map #(conj % i)
-                         (filter (fn [empty-cell]
-                                   (valid-entry puzzle i (first empty-cell) (second empty-cell))) puzzle-empty-cells)))
-            (range 1 10)))))
+  ;return a vector of vector of sets representing the valid next states of the given puzzle
+  (into [] (map (fn [i] (into [] (map (fn [j] (set (filter #(valid-entry puzzle % i j) (range 1 10)))) (range 9)))) (range 9))))
+
+(defn count-constraints
+  [puzzle constraint]
+  (remove nil?
+          (apply concat
+                 (map (fn [i] (map (fn [j] (if (= (get-in puzzle [i j]) 0)
+                                             [i j (count (get-in constraint [i j]))]
+                                             nil)) (range 9))) (range 9)))))
+
+(defn most-constrained-cells
+  ;takes in constraints, and returns the positions and possible values of the most constrained cells
+  ;(only unfilled ones)
+  [puzzle constraint]
+  (let [constraint-counts (count-constraints puzzle constraint)
+        min-count (apply min (map #(nth % 2) constraint-counts))]
+    (filter #(= (nth % 2) min-count) constraint-counts)))
 
 (defn next-puzzles
-  ;returns a lazy sequence of possible next moves
-  [puzzle]
-  (let
-   [next-states (shuffle (valid-next-states puzzle))]
-    (map (fn [next-state] (assoc-in puzzle [(first next-state) (second next-state)] (nth next-state 2))) next-states)))
+  [puzzle constraint]
+  (map #(vector (first %) (second %) (nth % 2) (assoc-in puzzle [(first %) (second %)] (nth % 2)))
+       (mapcat #(map (fn [i] [(first %) (second %) i]) (get-in constraint [(first %) (second %)])) (shuffle (most-constrained-cells puzzle constraint)))))
+
+(defn reduce-constraint
+  [i j val constraint]
+  (let [group_starti (* 3 (quot i 3))
+        group_startj (* 3 (quot j 3))
+        coords-to-edit (set (concat
+                             (for [x (range 9)] [i x])
+                             (for [x (range 9)] [x j])
+                             (for [x (range group_starti (+ 3 group_starti))
+                                   y (range group_startj (+ 3 group_startj))] [x y])))]
+    (reduce (fn [cons coord] (update-in cons coord disj val)) constraint coords-to-edit)))
+
+(defn check-each-valid
+  ;ensure each cell still has a valid value
+  [puzzle constraints]
+  (not (some #(and (= (get-in puzzle %) 0)
+                   (= (count (get-in constraints %)) 0))
+             (for [x (range 9)
+                   y (range 9)]
+               [x y]))))
 
 (defn recursive-solve-puzzle
   ;returns solution to the given puzzle 
-  [puzzle visited]
-             ;if already visited, back out
-  (if (@visited puzzle) []
-      (do (swap! visited conj puzzle)
-    ;possible optimization: check if any cell has no possibilities, return [] if so 
-          (if
-           (is-solved puzzle) [puzzle]
-           (mapcat #(recursive-solve-puzzle % visited) (next-puzzles puzzle))))))
+  [puzzle blanks visited constraint]
+  ;if already visited, back out
+  (lazy-seq
+   (if (@visited puzzle) []
+       (do (swap! visited conj puzzle)
+           (cond
+             (= blanks 0) [puzzle]
+             (not (check-each-valid puzzle constraint)) []
+             :else (mapcat (fn [next-puzzle] (recursive-solve-puzzle
+                                              (nth next-puzzle 3)
+                                              (- blanks 1)
+                                              visited
+                                              (reduce-constraint (first next-puzzle) (second next-puzzle) (nth next-puzzle 2) constraint)))
+                           (next-puzzles puzzle constraint)))))))
 
 (defn solve-puzzle
   [puzzle]
-  (recursive-solve-puzzle puzzle (atom #{})))
+  (recursive-solve-puzzle puzzle (count (empty-cells puzzle)) (atom #{}) (constraints puzzle)))
 
 (defn blank-puzzle
   []
