@@ -51,7 +51,7 @@
   [solution puzzle]
   (and solution ;solution is not none
        (every? true? (for [s squares]
-                       (contains? (get puzzle s) (get solution s)))) ;ensure solution fits in the original puzzle
+                       (str/includes? (get puzzle s) (get solution s)))) ;ensure solution fits in the original puzzle
        (every? true? (for [unit all-units]
                        (= (set (for [s unit] (get solution s))) (set digits)))))) ;ensure all units have each digit filled once
 
