@@ -1,23 +1,5 @@
 @import "tailwindcss";
 
-.cell {
-    border: 1px solid black;
-    width: 8vw;
-    height: 8vw;
-
-    display: flex;
-    justify-content: center;
-    /* horizontal center */
-    align-items: flex-end;
-    /* vertical bottom */
-
-    text-align: center;
-    padding-bottom: 4px;
-    /* optional spacing from bottom */
-
-    font-size: 4vw;
-}
-
 datalist {
     display: flex;
     flex-direction: column;

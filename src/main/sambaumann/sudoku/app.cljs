@@ -6,7 +6,7 @@
             [clojure.string :as str]))
 
 ;forward declare atoms used in the game logic and UI logic. 
-(declare active-square board-state original-state blank-puzzle)
+(declare puzzle-solved active-square board-state original-state blank-puzzle)
 
 ;forward declare funcitons for solving so they can be used in calls to each other
 (declare fill eliminate vec2grid grid2vec)
@@ -195,12 +195,15 @@
     [:div
    ;div properties
    ;styling
-     {:className (str "cell" (cond
-                               in-original? " bg-gray-200"
-                               active-square? " bg-yellow-100"
-                               :else " hover:bg-gray-200"))
+     {:className (str
+                  "w-[11vw] lg:w-[6vw] aspect-square  max-w-[100px] max-h-[100px] " ;; fixed sizing
+                  "border border-black text-5xl flex justify-center items-end text-center pb-1 "
+                  (cond
+                    in-original? "bg-gray-200"
+                    active-square? "bg-yellow-100"
+                    :else "hover:bg-gray-200"))
     ; sets the active square when clicked
-      :onClick #(when (not in-original?) (reset! active-square [i j]))}
+      :onClick #(when (and (not in-original?) (not @puzzle-solved)) (reset! active-square [i j]))}
    ;if the state is 0 - don't show it, otherwise do
      (let
       [square-state (get-in @board-state [i j])]
@@ -231,22 +234,27 @@
              (range 0 9 3))))
 
 (defn new-puzzle-creator
-  "create a new puzzle based on a difficulty slider"
   []
   (let [difficulty-val (r/atom 25)]
-    [:div
-     [:input {:type "range" :id "difficulty" :min 10 :max 50 :list "difficulty-values"
-              :onChange #(reset! difficulty-val (int (.. % -target -value)))}]
+    [:div {:className "flex flex-col items-center gap-2"}
+     [:label {:for "difficulty"} "Difficulty"]
+     [:input {:type "range"
+              :id "difficulty"
+              :min 10
+              :max 50
+              :list "difficulty-values"
+              :onChange #(reset! difficulty-val (int (.. % -target -value)))
+              :className "w-48"}]
      (into [:datalist {:id "difficulty-values"}]
            (map #(vector :option {:value (% 0) :label (% 1)})
                 [[10 "Easy"] [30 "Medium"] [50 "Hard"]]))
-     [:label {:for "difficulty"} "Difficulty"]
-     [:button {:onClick #(reset! original-state (grid2vec (create-unsolved-puzzle (new-filled-puzzle) @difficulty-val)))
-               :className "px-4 py-2 rounded-md border hover:bg-blue-100"}
+     [:button {:onClick (fn [] (reset! puzzle-solved false) (reset! original-state (grid2vec (create-unsolved-puzzle (new-filled-puzzle) @difficulty-val))))
+               :className "px-4 py-2 mt-2 rounded-md border border-gray-300 hover:bg-blue-100"}
       "New Puzzle"]]))
 
 (defn app []
-  [:div
+  [:div {:className "min-h-screen flex flex-col items-center justify-center gap-8 p-4"}
+   (if @puzzle-solved "Solved!" nil)
    (grid)
    (new-puzzle-creator)])
 
@@ -264,10 +272,19 @@
 ;Atoms
 (defonce root (delay (rdom/create-root (js/document.getElementById "root"))))
 
+(defonce puzzle-solved (r/atom false))
+
 (defonce active-square (r/atom [-1 -1]))
 
 ;the current digits in the board - 0 if not filled
 (defonce board-state (r/atom (blank-puzzle-vec)))
+(add-watch board-state :solved-check
+           (fn [_ _ _ new-state]
+             (if (is-solved (vec2grid new-state))
+               (do
+                 (reset! puzzle-solved true)
+                 (reset! active-square [-1 -1]))
+               nil)))
 
 ;the puzzle is loaded in as this atom 
 (defonce original-state (r/atom (blank-puzzle-vec)))
