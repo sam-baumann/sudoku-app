@@ -233,9 +233,17 @@
 (defn new-puzzle-creator
   "create a new puzzle based on a difficulty slider"
   []
-  [:button {:onClick #(reset! original-state (grid2vec (create-unsolved-puzzle (new-filled-puzzle) 50)))
-            :className "px-4 py-2 rounded-md border hover:bg-blue-100"}
-   "New Puzzle"])
+  (let [difficulty-val (r/atom 25)]
+    [:div
+     [:input {:type "range" :id "difficulty" :min 10 :max 50 :list "difficulty-values"
+              :onChange #(reset! difficulty-val (int (.. % -target -value)))}]
+     (into [:datalist {:id "difficulty-values"}]
+           (map #(vector :option {:value (% 0) :label (% 1)})
+                [[10 "Easy"] [30 "Medium"] [50 "Hard"]]))
+     [:label {:for "difficulty"} "Difficulty"]
+     [:button {:onClick #(reset! original-state (grid2vec (create-unsolved-puzzle (new-filled-puzzle) @difficulty-val)))
+               :className "px-4 py-2 rounded-md border hover:bg-blue-100"}
+      "New Puzzle"]]))
 
 (defn app []
   [:div
