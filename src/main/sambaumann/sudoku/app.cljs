@@ -9,7 +9,7 @@
 (declare active-square board-state original-state blank-puzzle)
 
 ;forward declare funcitons for solving so they can be used in calls to each other
-(declare fill eliminate)
+(declare fill eliminate vec2grid grid2vec)
 
 ;Game Logic
 ;reimplement peter norvig's sudoku solver in clojurescript; mine wasn't efficient enough
@@ -87,13 +87,13 @@
     (let [new-grid (update-in grid [s] str/replace d "")
           after-peers ;apply peer rules
           (cond (empty? (new-grid s))
-                nil
-                (= 1 (count (new-grid s)))
+                nil ;if the square is empty, return nil
+                (= 1 (count (new-grid s))) ;if there's only one possibility, eliminate it from the peers
                 (reduce (fn [ret s2] (if (not ret)
                                        nil
                                        (eliminate ret s2 (new-grid s))))
                         new-grid (peers s))
-                :else new-grid)]
+                :else new-grid)] ;otherwise, just go with the original grid
       (reduce (fn [ret unit]
                 (when ret
                   (let [dplaces (filter #(str/includes? (ret %) d) unit)]
@@ -107,14 +107,15 @@
   [grid]
   (when grid
     (let [min-count (apply min (filter #(> % 1) (map #(count (grid %)) squares)))
-          check-square (shuffle (filter #(= min-count (count (grid %))) squares))]
+          check-square (shuffle (filter #(= min-count (count (grid %))) squares))] ;we shuffle this to provide some randomness - does not have an impact on solving but helps create random new puzzles using this function
       (if (= 0 (count check-square)) (list grid) ;no squares with multiple possibilities - search succeeded
           (lazy-seq
            (mapcat (fn [d] (search (fill grid (first check-square) d)))
                    (grid (first check-square))))))))
 
 ;a 'grid' is a map where keys are the 'squares' set, and vals are possible digits.
-;a 'vec' is a 9x9 int vector representation of the puzzle, used primarily for storing the puzzle
+;a 'vec' is a 9x9 int vector representation of the puzzle, used primarily for storing/displaying the puzzle
+;next two functions convert between them
 (defn vec2grid
   [vec]
   (into {}
@@ -138,9 +139,41 @@
           (if (= 1 (count grid-val)) (int grid-val)
               0)))))))
 
-(defn blank-puzzle
+(defn blank-puzzle-vec
   []
   (into [] (repeat 9 (into [] (repeat 9 0)))))
+
+(defn blank-puzzle-grid
+  []
+  (vec2grid (blank-puzzle-vec)))
+
+(defn solve-puzzle
+  [puzzle]
+  (first (search (constrain puzzle))))
+
+(defn unique-solution?
+  [puzzle]
+  (= 1 (count (take 2 (search (constrain puzzle))))))
+
+(defn new-filled-puzzle
+  []
+  (first (search (blank-puzzle-grid))))
+
+(defn filled-squares
+  [puzzle]
+  (filter #(= 1 (count (puzzle %))) squares))
+
+(defn create-unsolved-puzzle
+  ;remove random squares until puzzle is unsolvable.
+  [puzzle spaces-to-remove]
+  (cond
+    (not (unique-solution? puzzle)) nil ;base case - if the puzzle does not have a unique solution, return nil
+    (= 0 spaces-to-remove) puzzle
+    :else (let [candidates (shuffle (filled-squares puzzle))]
+            (some (fn [remove-candidate]
+                    (let [next-puzzle (assoc puzzle remove-candidate digits)]
+                      (create-unsolved-puzzle next-puzzle (dec spaces-to-remove))))
+                  candidates))))
 
 (defn set-puzzle []
   (reset! original-state [[0 0 0 2 6 0 7 0 1]
@@ -197,12 +230,17 @@
                           (range 0 9 3))))
              (range 0 9 3))))
 
+(defn new-puzzle-creator
+  "create a new puzzle based on a difficulty slider"
+  []
+  [:button {:onClick #(reset! original-state (grid2vec (create-unsolved-puzzle (new-filled-puzzle) 50)))
+            :className "px-4 py-2 rounded-md border hover:bg-blue-100"}
+   "New Puzzle"])
+
 (defn app []
   [:div
    (grid)
-   [:button {:onClick set-puzzle
-             :className "px-4 py-2 rounded-md border hover:bg-blue-100"}
-    "reset puzzle"]])
+   (new-puzzle-creator)])
 
 ;Event Listeners
 (defn keypress-listener
@@ -221,10 +259,10 @@
 (defonce active-square (r/atom [-1 -1]))
 
 ;the current digits in the board - 0 if not filled
-(defonce board-state (r/atom (blank-puzzle)))
+(defonce board-state (r/atom (blank-puzzle-vec)))
 
 ;the puzzle is loaded in as this atom 
-(defonce original-state (r/atom (blank-puzzle)))
+(defonce original-state (r/atom (blank-puzzle-vec)))
 ;when the puzzle is changed, clear the board
 (add-watch original-state :board-clear
            #(reset! board-state @original-state))
