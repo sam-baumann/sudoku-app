@@ -98,11 +98,28 @@
                       :else ret))))
               after-peers (units s)))))
 
-(defn grid2vec
-  [grid])
-
 (defn vec2grid
-  [vec])
+  [vec]
+  (into {}
+        (for [i (range (count squares))]
+          (let [row (quot i 9)
+                col (mod i 9)
+                vec-val (get-in vec [row col])
+                grid-val (if (= vec-val 0) digits
+                             (str vec-val))]
+            [(nth squares i) grid-val]))))
+
+(defn grid2vec
+  [grid]
+  (vec
+   (for [row (range 9)]
+     (vec
+      (for [col (range 9)]
+        (let [i (+ (* row 9) col)
+              cur-square (nth squares i)
+              grid-val (grid cur-square)]
+          (if (= 1 (count grid-val)) (int grid-val)
+              0)))))))
 
 (defn blank-puzzle
   []
