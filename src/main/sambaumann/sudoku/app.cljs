@@ -2,13 +2,14 @@
   (:require [reagent.dom.client :as rdom]
             [reagent.core :as r]
             [goog.events :as events]
-            [clojure.set :as set]))
+            [clojure.set :as set]
+            [clojure.string :as str]))
 
 ;forward declare atoms used in the game logic and UI logic. 
 (declare active-square board-state original-state blank-puzzle)
 
-;forward declare fill so it can be used in constrain
-(declare fill)
+;forward declare funcitons for solving so they can be used in calls to each other
+(declare fill eliminate)
 
 ;Game Logic
 ;reimplement peter norvig's sudoku solver in clojurescript; mine wasn't efficient enough
@@ -55,10 +56,53 @@
                        (= (set (for [s unit] (get solution s))) (set digits)))))) ;ensure all units have each digit filled once
 
 (defn constrain
-  [grid])
+  ;propogate constraints on a copy of grid to yield a new constrained grid
+  [grid]
+  (let [result (into {} (for [s squares] [s digits]))]
+    (reduce (fn [res s]
+              (if (and res (= 1 (count (grid s))))
+                (fill res s (grid s))
+                res))
+            result
+            (keys grid))))
 
 (defn fill
-  [grid s d])
+  [grid s d]
+  (if (= (grid s) d)
+    grid
+    (reduce (fn [res d2] (when res (eliminate res s d2)))
+            grid
+            (filter #(not= % d)
+                    (grid s)))))
+
+(defn eliminate
+  [grid s d]
+  (if (not (str/includes? (grid s) d))
+    grid ; already eliminated 
+    (let [new-grid (update-in grid [s] str/replace d "")
+          after-peers ;apply peer rules
+          (cond (empty? (new-grid s))
+                nil
+                (= 1 (count (new-grid s)))
+                (reduce (fn [ret s2] (if (not ret)
+                                       nil
+                                       (eliminate ret s2 (new-grid s))))
+                        new-grid (peers s))
+                :else new-grid)]
+      (reduce (fn [ret unit]
+                (when ret
+                  (let [dplaces (filter #(str/includes? (ret %) d) unit)]
+                    (cond
+                      (= 0 (count dplaces)) nil
+                      (= 1 (count dplaces)) (fill ret (first dplaces) d)
+                      :else ret))))
+              after-peers (units s)))))
+
+(defn grid2vec
+  [grid])
+
+(defn vec2grid
+  [vec])
 
 (defn blank-puzzle
   []
