@@ -47,13 +47,18 @@
   (into {} (for [s squares]
              [s (disj (apply set/union (get units s)) s)])))
 
+(defn is-solved
+  [solution]
+  (and solution
+       (every? true? (for [unit all-units]
+                       (= (set (for [s unit] (get solution s))) (set digits))))))
+
 (defn is-solution
   [solution puzzle]
   (and solution ;solution is not none
        (every? true? (for [s squares]
                        (str/includes? (get puzzle s) (get solution s)))) ;ensure solution fits in the original puzzle
-       (every? true? (for [unit all-units]
-                       (= (set (for [s unit] (get solution s))) (set digits)))))) ;ensure all units have each digit filled once
+       (is-solved solution)))
 
 (defn constrain
   ;propogate constraints on a copy of grid to yield a new constrained grid
@@ -98,6 +103,18 @@
                       :else ret))))
               after-peers (units s)))))
 
+(defn search
+  [grid]
+  (when grid
+    (let [min-count (apply min (filter #(> % 1) (map #(count (grid %)) squares)))
+          check-square (shuffle (filter #(= min-count (count (grid %))) squares))]
+      (if (= 0 (count check-square)) (list grid) ;no squares with multiple possibilities - search succeeded
+          (lazy-seq
+           (mapcat (fn [d] (search (fill grid (first check-square) d)))
+                   (grid (first check-square))))))))
+
+;a 'grid' is a map where keys are the 'squares' set, and vals are possible digits.
+;a 'vec' is a 9x9 int vector representation of the puzzle, used primarily for storing the puzzle
 (defn vec2grid
   [vec]
   (into {}
