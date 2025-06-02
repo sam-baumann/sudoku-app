@@ -8,7 +8,7 @@
     "repl": "shadow-cljs cljs-repl sudoku",
     "tailwind": "tailwindcss -i ./public/input.css -o ./public/output.css",
     "test": "shadow-cljs compile test; node test_output/test.js",
-    "build": "shadow-cljs release sudoku"
+    "build": "pnpm run tailwind && shadow-cljs release sudoku"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.0.17",

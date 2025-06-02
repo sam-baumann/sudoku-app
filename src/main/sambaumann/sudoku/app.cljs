@@ -211,6 +211,11 @@
         (not= square-state 0)
          square-state))]))
 
+(defn github-link
+  []
+  [:a {:href "https://github.com/sam-baumann/sudoku-app" :target "_blank" :rel "noopener noreferrer"}
+   [:img {:src "./github-mark.svg" :alt "GitHub Link" :width "32" :height "32"}]])
+
 (defn group
   "group of 3x3 cells"
   [starti startj]
@@ -256,7 +261,8 @@
   [:div {:className "min-h-screen flex flex-col items-center justify-center gap-8 p-4"}
    (if @puzzle-solved "Solved!" nil)
    (grid)
-   (new-puzzle-creator)])
+   (new-puzzle-creator)
+   (github-link)])
 
 ;Event Listeners
 (defn keypress-listener
