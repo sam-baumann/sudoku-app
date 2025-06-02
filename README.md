@@ -10,8 +10,4 @@ If not in VSCode, use `pnpm run watch` for development and `pnpm run repl` to st
 
 Tailwind used for styling - use `pnpm run tailwind` to generate the output css. Run this with `--watch` to update CSS during development
 
-## Todos
-- [ ] Add header
-- [ ] Add link to GitHub repo
-- [ ] Tune to be print-friendly
-- [ ] Ability to save/share puzzles
+Unit testing file is out of date - not to be used
